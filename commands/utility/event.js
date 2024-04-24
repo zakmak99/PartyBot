@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
-
-
+const { google } = require('googleapis');
+const credentials = require('../../key/credentials.json');
 
 module.exports = {
 
@@ -24,28 +24,57 @@ module.exports = {
         }
 
         // Create event object
-        const event = {
-            name,
-            datetime: new Date(`${date}T${time}:00`),
-            description
-        };
+        const eventData = [name, date, time, description];
+
+       
 
         // Process event creation (e.g., store in database, announce in channel)
-
         await interaction.reply(`@everyone, You are herby invited to "${name}" on ${date} at ${time}.`);
         
-        createEvent(event);
+        await createEvent(eventData);
     },
 };
 
 
+//Initialize google sheets api
+const auth = new google.auth.GoogleAuth({
+    credentials,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+});
 
-function isValidDate(dateString) {
-    const regex = /^\d{4}-\d{2}-\d{2}$/;
-    return regex.test(dateString);
+const sheets = google.sheets({ version: 'v4', auth });
+
+//set spreadsheet
+const spreadsheetId = '14dRDdcrgSCRcVQshzuI_gy8_EONAoCeApFiEy1qAHl8';
+async function createEvent(eventData) {
+    try {
+        console.log('Event Data:', eventData);
+        // Append the event data to sheet
+        const appendResponse = await sheets.spreadsheets.values.append({
+            spreadsheetId: spreadsheetId,
+            range: 'Sheet1!A:D',
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+                values: [eventData],
+            },
+        });
+
+
+        console.log('Event created:', appendResponse.data);
+        return appendResponse.data;
+    } catch (error) {
+        console.error('Error creating event:', error);
+        throw error;
+    }
 }
 
-function isValidTime(timeString) {
-    const regex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-    return regex.test(timeString);
-}
+  
+    function isValidDate(dateString) {
+        const regex = /^\d{4}-\d{2}-\d{2}$/;
+        return regex.test(dateString);
+    }
+
+    function isValidTime(timeString) {
+        const regex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+        return regex.test(timeString);
+    }
