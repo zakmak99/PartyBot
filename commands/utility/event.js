@@ -72,7 +72,7 @@ async function createEvent(eventData) {
     // Check if the date string matches the YYYY-MM-DD format
     const regex = /^\d{4}-\d{2}-\d{2}$/;
        if (!regex.test(dateString)) {
-           await interaction.reply('Invalid date format. Please Use YYYY-MM-DD');
+           interaction.reply('Invalid date format. Please Use YYYY-MM-DD');
            return false;
        }
 
@@ -80,14 +80,14 @@ async function createEvent(eventData) {
     const currentDate = new Date();
     const inputDate = new Date(dateString);
        if (inputDate < currentDate) {
-           await interaction.reply('Entered date is in the past');
+           interaction.reply('Entered date is in the past');
            return false;
        }
 
     // Check if the month is valid (1 to 12)
     const month = parseInt(dateString.split('-')[1], 10);
        if (month < 1 || month > 12) {
-           await interaction.reply('Please use a valid month(1-12)');
+           interaction.reply('Please use a valid month(1-12)');
            return false;
        }
 
@@ -97,7 +97,7 @@ async function createEvent(eventData) {
     function isValidTime(timeString) {
         const regex = /^([01]\d|2[0-3]):([0-5]\d)$/;
         if (!regex.test(timeString)) {
-            await interaction.reply('Invalid time format. Please use HH:MM 24 hour formating');
+            interaction.reply('Invalid time format. Please use HH:MM 24 hour formating');
             return false;
         };
         return true;
