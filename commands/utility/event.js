@@ -9,7 +9,7 @@ module.exports = {
         .setDescription('Creates a server event')
         .addStringOption(option => option.setName('name').setDescription('Event name').setRequired(true))
         .addStringOption(option => option.setName('date').setDescription('Event date (YYYY-MM-DD)').setRequired(true))
-        .addStringOption(option => option.setName('time').setDescription('Event time (HH:MM)').setRequired(true))
+        .addStringOption(option => option.setName('time').setDescription('Event time (HH:MM 24 hour formatting)').setRequired(true))
         .addStringOption(option => option.setName('description').setDescription('Event description').setRequired(true)),
     async execute(interaction) {
         const name = interaction.options.getString('name');
@@ -19,7 +19,6 @@ module.exports = {
 
         // Validate input
         if (!isValidDate(date) || !isValidTime(time)) {
-            await interaction.reply('Invalid date or time format. Please use YYYY-MM-DD for date and HH:MM for time.');
             return;
         }
 
@@ -69,12 +68,37 @@ async function createEvent(eventData) {
 }
 
   
-    function isValidDate(dateString) {
-        const regex = /^\d{4}-\d{2}-\d{2}$/;
-        return regex.test(dateString);
-    }
+   function isValidDate(dateString) {
+    // Check if the date string matches the YYYY-MM-DD format
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
+       if (!regex.test(dateString)) {
+           await interaction.reply('Invalid date format. Please Use YYYY-MM-DD');
+           return false;
+       }
+
+    // Check if the date is not in the past
+    const currentDate = new Date();
+    const inputDate = new Date(dateString);
+       if (inputDate < currentDate) {
+           await interaction.reply('Entered date is in the past');
+           return false;
+       }
+
+    // Check if the month is valid (1 to 12)
+    const month = parseInt(dateString.split('-')[1], 10);
+       if (month < 1 || month > 12) {
+           await interaction.reply('Please use a valid month(1-12)');
+           return false;
+       }
+
+    return true;
+}
 
     function isValidTime(timeString) {
         const regex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-        return regex.test(timeString);
+        if (!regex.test(timeString)) {
+            await interaction.reply('Invalid time format. Please use HH:MM 24 hour formating');
+            return false;
+        };
+        return true;
     }
