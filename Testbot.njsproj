@@ -30,6 +30,7 @@
   <ItemGroup>
     <Content Include="app.js" />
     <Content Include="commands\utility\event.js" />
+    <Content Include="commands\utility\roleMessage.js" />
     <Content Include="config.json" />
     <Content Include="deploy-commands.js" />
     <Content Include="package.json" />
