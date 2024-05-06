@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { google } = require('googleapis');
 const credentials = require('../../key/credentials.json');
+const moment = require('moment');
 
 module.exports = {
 
@@ -69,36 +70,31 @@ async function createEvent(eventData) {
 }
 
   
- async  function isValidDate(interaction, dateString) {
+async function isValidDate(interaction, dateString) {
     // Check if the date string matches the YYYY-MM-DD format
     const regex = /^\d{4}-\d{2}-\d{2}$/;
-       if (!regex.test(dateString)) {
-           await interaction.reply('Invalid date format. Please Use YYYY-MM-DD');
-           return false;
-       }
+    if (!regex.test(dateString)) {
+        await interaction.reply('Invalid date format. Please Use YYYY-MM-DD');
+        return false;
+    }
 
-    // Check if the date is not in the past
-    const currentDate = new Date();
-    const inputDate = new Date(dateString);
-       if (inputDate < currentDate) {
-           await interaction.reply('Entered date is in the past');
-           return false;
-       }
+    // Parse the date using moment.js
+    const dateMoment = moment(dateString, 'YYYY-MM-DD');
 
-    // Check if the month is valid (1 to 12)
-    const month = parseInt(dateString.split('-')[1], 10);
-       if (month < 1 || month > 12) {
-           await interaction.reply('Please use a valid month(1-12)');
-           return false;
-       }
+    // Check if the date is in the past
+    if (!dateMoment.isValid() || dateMoment.isBefore(moment(), 'day')) {
+        await interaction.reply('Entered date is in the past');
+        return false;
+    }
 
     return true;
 }
 
+
   async  function isValidTime(interaction, timeString) {
         const regex = /^([01]\d|2[0-3]):([0-5]\d)$/;
         if (!regex.test(timeString)) {
-            await interaction.reply('Invalid time format. Please use HH:MM 24 hour formating');
+            await interaction.reply('Invalid time format. Please use HH:MM 24 hour formatting');
             return false;
         };
         return true;

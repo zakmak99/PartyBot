@@ -2,11 +2,21 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits, Partials } = require('discord.js');
 const { token } = require('./config.json');
+const cron = require('node-cron');
+const { google } = require('googleapis');
+const credentials = require('./key/credentials.json');
+const moment = require('moment');
 
 const client = new Client({
 	intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions],
 	partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
+const auth = new google.auth.GoogleAuth({
+    credentials,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+});
+const sheets = google.sheets({ version: 'v4', auth });
+const spreadsheetId = '14dRDdcrgSCRcVQshzuI_gy8_EONAoCeApFiEy1qAHl8';
 
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
@@ -78,6 +88,51 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
 	else if (reaction.emoji.name == 'cypher_VALORANT')
 		await member.roles.remove('1232523078899077181');
 });
+
+
+
+cron.schedule('0 * * * *', async () => { 
+    console.log('Running event check...');
+    const announcementsChannel = client.channels.cache.get('802807718850854913');
+    try {
+        // Fetch events from the spreadsheet
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: spreadsheetId,
+            range: 'Sheet1!A:E', 
+        });
+        const events = response.data.values; 
+
+        const currentDate = moment();
+        date = currentDate.format('YYYY-MM-DD');
+        console.log('curent date is ', date);
+
+        // Loop through each event
+        for (const event of events) {
+            console.log('counting');
+            const eventName = event[0];
+            const eventDate = moment(event[1]);
+            const eventTime = moment(event[2], 'HH:mm');
+
+            // Calculate the time difference between the current date and the event date
+            const daysDifference = eventDate.diff(currentDate.format('YYYY-MM-DD'), 'days');
+            console.log(daysDifference);
+            // Calculate the time difference between the current time and the event time
+            const timeDifference = eventTime.diff(currentDate, 'minutes');
+            console.log(timeDifference);
+            // If the event is scheduled within an hour and on the same day, announce it
+            if (daysDifference === 0 && timeDifference > 0 && timeDifference <= 60) {
+                console.log('posting');
+                const formattedTime = eventTime.format('HH:mm');
+                await announcementsChannel.send(`@everyone, Reminder: "${eventName}" starts at ${formattedTime}.`);
+            }
+        }
+    } catch (error) {
+        console.error('Error checking events:', error);
+    }
+});
+
+
+
 
 client.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
